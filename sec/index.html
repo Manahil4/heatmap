@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heat map</title>
+
+    <!-- leaflet cdn link -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>HEATMAPSDEVELOPMENT</h1>
+    <h2>To Visualize Real-Time Magnetic Field Strength 
+        in your Region</h2>
+    <div id="map"></div>
+</body>
+</html>
+
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script src="./leaflet-heat.js"></script>
+
+<script>
+    // Leaflet map initialization
+    const map = L.map('map').setView([51.505, -0.09], 13);
+    const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+    const tileURL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+
+    const tile = L.tileLayer(tileURL, { attribution });
+    tile.addTo(map);
+
+    function parseCSV(csv) {
+        const lines = csv.split('\n');
+        const result = [];
+        const headers = lines[0].split(',');
+        for (let i = 1; i < lines.length; i++) {
+            const obj = {};
+            const currentLine = lines[i].split(',');
+            if (currentLine.length === headers.length) { // Check if the line has the same number of fields as headers
+                for (let j = 0; j < headers.length; j++) {
+                    const value = currentLine[j] ? currentLine[j].trim() : ''; // Check if the value is undefined
+                    // Check if the field is a numerical value or a specific header
+                    if (value !== '' && !isNaN(value) && ['Latitude', 'Longitude', 'Altitude', 'MagX', 'MagY', 'MagZ', 'NetField'].includes(headers[j])) {
+                        obj[headers[j]] = parseFloat(value);
+                    } else if (headers[j] === 'TimeStamp') {
+                        // Convert timestamp to Unix timestamp
+                        obj[headers[j]] = Date.parse(value) / 1000; // Divide by 1000 to convert milliseconds to seconds
+                    } else {
+                        obj[headers[j]] = value;
+                    }
+                }
+                result.push(obj);
+            }
+        }
+        return result;
+    }
+    
+    // Load CSV file using AJAX
+    // Load CSV file using AJAX
+fetch('http://localhost:8000/magnetometertable.csv')
+.then(response => response.text()) // Get the response as text
+.then(csvData => {
+    // Parse the CSV data
+    const parsedData = parseCSV(csvData);
+    console.log(parsedData); // Log parsed data to console
+
+    // Create heatmap layer
+    const addressPoints = parsedData.map(function(item) {
+        return {
+            lat: parseFloat(item.Latitude),
+            lng: parseFloat(item.Longitude),
+            altitude: parseFloat(item.Altitude),
+            magX: parseFloat(item.MagX),
+            magY: parseFloat(item.MagY),
+            magZ: parseFloat(item.MagZ),
+            netField: parseFloat(item.NetField),
+            timestamp: Date.parse(item.TimeStamp) / 1000 // Convert timestamp to Unix timestamp
+        };
+    });
+
+    const heat = L.heatLayer(addressPoints.map(function(point) {
+        return [point.lat, point.lng, point.altitude, point.magX, point.magY, point.magZ, point.netField];
+    })).addTo(map);
+})
+.catch(error => console.error('Error loading CSV file:', error));
+
+</script> 
+<!--  -->

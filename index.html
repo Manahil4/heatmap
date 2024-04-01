@@ -42,7 +42,7 @@
     tile.addTo(map);
 
     // Parse CSV and create heatmap
-    Papa.parse("yourfile.csv", {
+    Papa.parse("http://localhost:8000/magnetometertable.csv", {
         download: true,
         header: true,
         complete: function(results) {
