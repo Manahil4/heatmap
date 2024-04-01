@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heat map with D3.js</title>
+
+    <!-- Include D3.js library -->
+    <script src="https://d3js.org/d3.v4.js" charset="utf-8"></script>
+    <!-- Include Leaflet CSS and JavaScript -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <!-- Include Leaflet Heatmap Plugin -->
+    <script src="./leaflet-heat.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Heat map with D3.js</h1>
+    <h2>To Visualize Real-Time Magnetic Field Strength in your Region</h2>
+    <div id="map"></div>
+
+    <script>
+        // Create Leaflet map
+        const map = L.map('map').setView([51.505, -0.09], 13);
+        const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+        const tileURL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+        const tile = L.tileLayer(tileURL, { attribution }).addTo(map);
+
+        // Specify the URL of the CSV file
+        const url = 'magnetometertable.csv';
+
+        // Use d3.csv() to load the CSV file
+        d3.csv(url, function(data) {
+            // Callback function executed once data is loaded
+            console.log(data); // Output the data to the console for testing
+
+            // Create heatmap data array
+            const heatData = data.map(function(item) {
+                return [parseFloat(item.latitude), parseFloat(item.longitude)];
+            });
+
+            // Create Leaflet heatmap layer
+            L.heatLayer(heatData).addTo(map);
+        });
+    </script>
+</body>
+</html>
